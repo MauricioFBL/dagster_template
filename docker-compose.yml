@@ -1,0 +1,77 @@
+---
+version: "3.9"
+
+x-build:
+  &default-build
+  context: .
+  dockerfile: Dockerfile
+
+x-app-vars:
+  &default-app-vars
+  DAGSTER_POSTGRES_HOSTNAME: "postgresql"
+  DAGSTER_POSTGRES_DB: "postgres_db"
+  DAGSTER_POSTGRES_USER: "postgres_user"
+  DAGSTER_POSTGRES_PASSWORD: "postgres_password"
+
+services:
+
+  # Dagster core services
+  dagit:
+    build:
+      << : *default-build
+      target: dagit
+    container_name: dagit
+    restart: on-failure
+    environment:
+      << : *default-app-vars
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - workspace
+    profiles:
+      - dagster
+    volumes:
+      - ./dagster.yaml:/opt/dagster/dagster_home/dagster.yaml
+      - ./workspace.yaml:/opt/dagster/dagster_home/workspace.yaml
+    networks:
+      - dagster_network
+
+  dagster-daemon:
+    build:
+      << : *default-build
+      target: daemon
+    container_name: dagster-daemon
+    restart: on-failure
+    environment:
+      << : *default-app-vars
+    depends_on:
+      - postgres
+      - workspace
+    profiles:
+      - dagster
+    volumes:
+      - ./dagster.yaml:/opt/dagster/dagster_home/dagster.yaml
+      - ./workspace.yaml:/opt/dagster/dagster_home/workspace.yaml
+    networks:
+      - dagster_network
+
+  postgresql:
+    image: postgres:11
+    container_name: postgresql
+    environment:
+      POSTGRES_DB: postgres_db
+      POSTGRES_USER: postgres_user
+      POSTGRES_PASSWORD: postgres_password
+    volumes:
+      - ./postgres-dagster:/var/lib/postgresql/data
+    networks:
+      - dagster_network
+
+networks:
+  dagster_network:
+    driver: bridge
+    name: dagster_network
+
+volumes:
+  postgresql:
