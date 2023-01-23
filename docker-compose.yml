@@ -1,4 +1,8 @@
-version: "3.11"
+version: "3.10.9"
+
+volumes:
+  dagster_database:
+    driver: local
 
 services:
   # This service runs the postgres DB used by dagster for run storage, schedule storage,
@@ -7,9 +11,11 @@ services:
     image: postgres:11
     container_name: docker_postgresql
     environment:
-      POSTGRES_USER: "postgres_user"
-      POSTGRES_PASSWORD: "postgres_password"
-      POSTGRES_DB: "postgres_db"
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - dagster_database:/var/lib/postgresql/data
     networks:
       - docker_network
 
@@ -26,9 +32,9 @@ services:
     image: docker_user_code_image
     restart: always
     environment:
-      DAGSTER_POSTGRES_USER: "postgres_user"
-      DAGSTER_POSTGRES_PASSWORD: "postgres_password"
-      DAGSTER_POSTGRES_DB: "postgres_db"
+      DAGSTER_POSTGRES_USER: ${POSTGRES_USER}
+      DAGSTER_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DAGSTER_POSTGRES_DB: ${POSTGRES_DB}
       DAGSTER_CURRENT_IMAGE: "docker_user_code_image"
     networks:
       - docker_network
@@ -49,14 +55,15 @@ services:
       - -w
       - workspace.yaml
     container_name: docker_dagit
+    image: docker_dagit
     expose:
       - "3000"
     ports:
       - "3000:3000"
     environment:
-      DAGSTER_POSTGRES_USER: "postgres_user"
-      DAGSTER_POSTGRES_PASSWORD: "postgres_password"
-      DAGSTER_POSTGRES_DB: "postgres_db"
+      DAGSTER_POSTGRES_USER: ${POSTGRES_USER}
+      DAGSTER_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DAGSTER_POSTGRES_DB: ${POSTGRES_DB}
     volumes: # Make docker client accessible so we can terminate containers from dagit
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/io_manager_storage:/tmp/io_manager_storage
@@ -76,11 +83,12 @@ services:
       - dagster-daemon
       - run
     container_name: docker_daemon
+    image: docker_daemon
     restart: on-failure
     environment:
-      DAGSTER_POSTGRES_USER: "postgres_user"
-      DAGSTER_POSTGRES_PASSWORD: "postgres_password"
-      DAGSTER_POSTGRES_DB: "postgres_db"
+      DAGSTER_POSTGRES_USER: ${POSTGRES_USER}
+      DAGSTER_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DAGSTER_POSTGRES_DB: ${POSTGRES_DB}
     volumes: # Make docker client accessible so we can launch containers using host docker
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/io_manager_storage:/tmp/io_manager_storage
@@ -89,6 +97,16 @@ services:
     depends_on:
       - docker_postgresql
       - docker_user_code
+
+  # DBT
+  docker_dbt:
+    build: 
+      context: ./dbt
+      dockerfile: Dockerfile
+    container_name: docker_dbt
+    image: docker_dbt
+    networks:
+      - docker_network
 
 networks:
   docker_network:
