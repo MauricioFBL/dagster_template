@@ -40,7 +40,6 @@ def save_gsheet(context, get_dataframe):
 def save_local_csv(context, get_dataframe):
     get_dataframe.to_csv('prueba_local.csv')
     context.add_output_metadata({"row_count_local": len(get_dataframe)})
-    context.info.log("Prueba union")
 
 
 all_assets_job = define_asset_job(name= "all_assets_job", selection= "save_local_csv")

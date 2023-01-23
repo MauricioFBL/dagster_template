@@ -2,3 +2,4 @@ __pycache__
 dagster-modelos-drive.json
 .venv
 venv
+.env

@@ -3,12 +3,8 @@
 
 FROM python:3.10.9-slim
 
-RUN pip install \
-    dagster \
-    dagster-graphql \
-    dagit \
-    dagster-postgres \
-    dagster-docker
+COPY ["./requirements_ui.txt", "."] 
+RUN pip3 install -r requirements_ui.txt
 
 # Set $DAGSTER_HOME and copy dagster instance and workspace YAML there
 ENV DAGSTER_HOME=/opt/dagster/dagster_home/
