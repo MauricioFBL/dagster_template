@@ -1,9 +1,9 @@
-FROM python:3.8-slim
+FROM python:3.10.9-slim
 
 # Checkout and install dagster libraries needed to run the gRPC server
 # exposing your repository to dagit and dagster-daemon, and to load the DagsterInstance
 
-RUN pip install \
+RUN pip3 install \
     dagster \
     dagster-postgres \
     dagster-docker \
